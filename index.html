@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MindReset Pico — Nạp Firmware (Full Flash)</title>
+  <style>
+    :root {
+      --bg: #f5f5f2;
+      --card: #ffffff;
+      --text: #18181b;
+      --muted: #52525b;
+      --border: #e4e4e7;
+      --accent: #18181b;
+      --accent-hover: #27272a;
+      --success: #15803d;
+      --error: #b91c1c;
+      --warn-bg: #fffbeb;
+      --warn-border: #fde68a;
+      --warn-text: #92400e;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      line-height: 1.5;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 580px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #f4f4f5;
+      color: var(--muted);
+    }
+
+    .lang-switch {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fafafa;
+    }
+
+    .lang-btn {
+      border: none;
+      background: transparent;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .lang-btn.active {
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      margin: 0 0 18px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .meta-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .meta-table th,
+    .meta-table td {
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .meta-table tr:last-child th,
+    .meta-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .meta-table th {
+      width: 34%;
+      color: var(--muted);
+      font-weight: 500;
+      background: #fafafa;
+    }
+
+    .meta-table td {
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .steps {
+      margin: 0 0 16px;
+      padding: 12px 14px 12px 30px;
+      background: #fafafa;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .steps li+li {
+      margin-top: 4px;
+    }
+
+    .disclaimer {
+      margin: 0 0 18px;
+      padding: 11px 14px;
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-border);
+      border-radius: 8px;
+      font-size: 12.5px;
+      color: var(--warn-text);
+    }
+
+    .disclaimer strong {
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .btn-flash {
+      width: 100%;
+      padding: 14px 20px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #ffffff;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn-flash:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+
+    .btn-flash:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .progress-wrap {
+      margin-top: 18px;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 13px;
+      margin-bottom: 6px;
+      gap: 12px;
+    }
+
+    .status-text {
+      font-weight: 500;
+    }
+
+    .status-text.ok {
+      color: var(--success);
+    }
+
+    .status-text.err {
+      color: var(--error);
+    }
+
+    .status-pct {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    progress {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      appearance: none;
+      -webkit-appearance: none;
+      border: 1px solid var(--border);
+      background: #f4f4f5;
+    }
+
+    progress::-webkit-progress-bar {
+      background: #f4f4f5;
+    }
+
+    progress::-webkit-progress-value {
+      background: var(--accent);
+      transition: width 0.15s ease;
+    }
+
+    details {
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fafafa;
+      font-size: 12px;
+    }
+
+    summary {
+      padding: 8px 12px;
+      cursor: pointer;
+      color: var(--muted);
+      font-weight: 500;
+      user-select: none;
+    }
+
+    pre {
+      margin: 0;
+      padding: 10px 12px;
+      border-top: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 11.5px;
+      max-height: 220px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #18181b;
+      color: #e4e4e7;
+      border-radius: 0 0 7px 7px;
+    }
+
+    .footer {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12.5px;
+      color: var(--muted);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .footer a {
+      color: var(--text);
+      font-weight: 600;
+      text-decoration: none;
+      border-bottom: 1px dashed var(--muted);
+    }
+
+    .footer a:hover {
+      border-bottom-style: solid;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="card">
+    <div class="top-bar">
+      <span class="badge">ESP32-S3 · USB WebSerial</span>
+      <div class="lang-switch" role="group" aria-label="Language switch">
+        <button type="button" class="lang-btn active" data-lang="vi">Tiếng Việt</button>
+        <button type="button" class="lang-btn" data-lang="en">English</button>
+      </div>
+    </div>
+
+    <h1 id="t-title">MindReset Pico — Full Flash</h1>
+    <p class="subtitle" id="t-subtitle"></p>
+
+    <table class="meta-table">
+      <tbody>
+        <tr>
+          <th id="t-th-device"></th>
+          <td id="meta-device">MindReset Pico (ESP32-S3)</td>
+        </tr>
+        <tr>
+          <th id="t-th-version"></th>
+          <td id="meta-version">...</td>
+        </tr>
+        <tr>
+          <th id="t-th-layout"></th>
+          <td id="meta-parts">0x0 bootloader.bin<br>0x8000 partitions.bin<br>0x10000 firmware.bin<br>0xd10000
+            ota_data_initial.bin</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <ol class="steps">
+      <li id="t-step1"></li>
+      <li id="t-step2"></li>
+    </ol>
+
+    <div class="disclaimer" role="note">
+      <strong id="t-disc-title"></strong>
+      <span id="t-disc-body"></span>
+    </div>
+
+    <button type="button" class="btn-flash" id="btn-flash" disabled>Full Flash</button>
+
+    <div class="progress-wrap">
+      <div class="status-row">
+        <span class="status-text" id="status-text"></span>
+        <span class="status-pct" id="status-pct">0%</span>
+      </div>
+      <progress id="progress-bar" max="100" value="0"></progress>
+    </div>
+
+    <details id="log-details">
+      <summary id="t-log-summary"></summary>
+      <pre id="log-output"></pre>
+    </details>
+
+    <footer class="footer">
+      <span>
+        <span id="t-author-label"></span>:
+        <a href="http://m.me/ductho.info" target="_blank" rel="noopener noreferrer">leductho911</a>
+      </span>
+      <span>MindReset Pico (ESP32-S3)</span>
+    </footer>
+  </main>
+
+  <script type="module">
+    import { ESPLoader, Transport } from './esptool-js-0.7.0.js';
+
+    const EXPECTED_OFFSETS = [0x0, 0x8000, 0x10000, 0xd10000];
+    const PICO_CHIP_ID = 9; // ESP32-S3
+
+    const I18N = {
+      vi: {
+        pageTitle: 'MindReset Pico — Nạp Firmware (Full Flash)',
+        title: 'MindReset Pico — Full Flash',
+        subtitle: 'Nạp đầy đủ bootloader, bảng phân vùng, firmware ứng dụng và đặt lại phân vùng khởi động về <code>ota_0</code>.',
+        thDevice: 'Thiết bị',
+        thVersion: 'Phiên bản',
+        thLayout: 'Bố cục Flash',
+        loadingManifest: 'Đang tải manifest.json…',
+        step1: 'Kết nối <strong>MindReset Pico</strong> qua cáp USB và đưa máy vào <strong>chế độ BOOT</strong> (trên máy: <em>Cài đặt → Chế độ BOOT nạp ROM → Vào chế độ BOOT</em>).',
+        step2: 'Nhấn nút <strong>Full Flash</strong> bên dưới và chọn cổng USB Serial/JTAG của ESP32-S3.',
+        discTitle: 'Miễn trừ trách nhiệm (Disclaimer)',
+        discBody: 'Công cụ này được cung cấp nguyên trạng. Việc nạp firmware luôn tiềm ẩn rủi ro; bạn tự chịu hoàn toàn trách nhiệm đối với mọi vấn đề phát sinh trên thiết bị của mình.',
+        btnFlash: 'Full Flash',
+        logSummary: 'Nhật ký nạp (Console Log)',
+        authorLabel: 'Tác giả',
+        statusChecking: 'Đang kiểm tra gói firmware…',
+        statusNoWebSerial: 'Trình duyệt không hỗ trợ WebSerial. Vui lòng dùng Chrome hoặc Edge qua HTTPS / localhost.',
+        statusReady: 'Sẵn sàng nạp firmware cho MindReset Pico.',
+        statusPkgErr: (msg) => `Lỗi gói firmware: ${msg}`,
+        statusDownloading: (path, i, n) => `Đang tải và kiểm tra ${path} (${i}/${n})…`,
+        statusConnecting: 'Đang kết nối MindReset Pico (ESP32-S3)…',
+        statusWriting: 'Đang nạp Full Flash (không rút cáp USB)…',
+        statusFlashingPart: (name, addr) => `Đang nạp ${name} (0x${addr.toString(16)})…`,
+        statusResetting: 'Đang khởi động lại Pico vào firmware mới…',
+        statusDone: (ver) => `Nạp Full Flash hoàn tất (${ver})! Nếu máy vẫn ở chế độ BOOT, hãy bấm nút Reset một lần.`,
+        statusFailed: (msg) => `Nạp thất bại: ${msg}`,
+        errNotPicoManifest: 'manifest.json không phải gói dành cho MindReset Pico (ESP32-S3).',
+        errMissingParts: 'manifest.json phải chứa đủ 4 phần của Full Flash.',
+        errMissingOffset: (off) => `Thiếu phần nạp bắt buộc tại địa chỉ 0x${off.toString(16)}.`,
+        errChipMismatch: (got) => `Thiết bị đang kết nối là "${got}", không phải "ESP32-S3" (MindReset Pico). Đã hủy trước khi ghi.`,
+      },
+      en: {
+        pageTitle: 'MindReset Pico — Full Flash',
+        title: 'MindReset Pico — Full Flash',
+        subtitle: 'Flashes bootloader, partition table, application firmware, and resets active OTA slot to <code>ota_0</code>.',
+        thDevice: 'Device',
+        thVersion: 'Version',
+        thLayout: 'Flash Layout',
+        loadingManifest: 'Loading manifest.json…',
+        step1: 'Connect your <strong>MindReset Pico</strong> via USB and enter <strong>BOOT mode</strong> (on device: <em>Settings → Upgrade &amp; Recovery → BOOT Flash</em>).',
+        step2: 'Click <strong>Full Flash</strong> below and select the Espressif USB Serial/JTAG port.',
+        discTitle: 'Disclaimer',
+        discBody: 'This tool is provided as-is. Flashing firmware carries inherent risk; you proceed entirely at your own risk and assume full responsibility for your device.',
+        btnFlash: 'Full Flash',
+        logSummary: 'Flasher Console Log',
+        authorLabel: 'Author',
+        statusChecking: 'Checking firmware package…',
+        statusNoWebSerial: 'WebSerial is not supported in this browser. Use Chrome or Edge over HTTPS / localhost.',
+        statusReady: 'Ready to flash MindReset Pico.',
+        statusPkgErr: (msg) => `Package error: ${msg}`,
+        statusDownloading: (path, i, n) => `Downloading & verifying ${path} (${i}/${n})…`,
+        statusConnecting: 'Connecting to MindReset Pico (ESP32-S3)…',
+        statusWriting: 'Writing Full Flash (do not unplug USB)…',
+        statusFlashingPart: (name, addr) => `Flashing ${name} (0x${addr.toString(16)})…`,
+        statusResetting: 'Resetting Pico into new firmware…',
+        statusDone: (ver) => `Full Flash complete (${ver})! If Pico stays in BOOT mode, press Reset once.`,
+        statusFailed: (msg) => `Flash failed: ${msg}`,
+        errNotPicoManifest: 'manifest.json is not a MindReset Pico (ESP32-S3) package.',
+        errMissingParts: 'manifest.json must contain all 4 full-flash parts.',
+        errMissingOffset: (off) => `Missing required flash part at offset 0x${off.toString(16)}.`,
+        errChipMismatch: (got) => `Connected chip is "${got}", expected "ESP32-S3" (MindReset Pico). Aborting before write.`,
+      }
+    };
+
+    const btnFlash = document.getElementById('btn-flash');
+    const statusText = document.getElementById('status-text');
+    const statusPct = document.getElementById('status-pct');
+    const progressBar = document.getElementById('progress-bar');
+    const logOutput = document.getElementById('log-output');
+    const metaVersion = document.getElementById('meta-version');
+    const metaParts = document.getElementById('meta-parts');
+    const langButtons = document.querySelectorAll('.lang-btn');
+
+    let currentLang = localStorage.getItem('pico_flasher_lang') === 'en' ? 'en' : 'vi';
+    let manifestData = null;
+    let busy = false;
+    let lastStatusState = { key: 'statusChecking', args: [], kind: '' };
+
+    function t(key, ...args) {
+      const val = I18N[currentLang][key];
+      return typeof val === 'function' ? val(...args) : val;
+    }
+
+    function applyTranslations() {
+      document.documentElement.lang = currentLang;
+      document.title = t('pageTitle');
+      document.getElementById('t-title').textContent = t('title');
+      document.getElementById('t-subtitle').innerHTML = t('subtitle');
+      document.getElementById('t-th-device').textContent = t('thDevice');
+      document.getElementById('t-th-version').textContent = t('thVersion');
+      document.getElementById('t-th-layout').textContent = t('thLayout');
+      document.getElementById('t-step1').innerHTML = t('step1');
+      document.getElementById('t-step2').innerHTML = t('step2');
+      document.getElementById('t-disc-title').textContent = t('discTitle');
+      document.getElementById('t-disc-body').textContent = t('discBody');
+      btnFlash.textContent = t('btnFlash');
+      document.getElementById('t-log-summary').textContent = t('logSummary');
+      document.getElementById('t-author-label').textContent = t('authorLabel');
+      if (!manifestData) {
+        metaVersion.textContent = t('loadingManifest');
+      }
+      langButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === currentLang);
+      });
+      if (lastStatusState?.key) {
+        statusText.textContent = t(lastStatusState.key, ...(lastStatusState.args || []));
+        statusText.className = 'status-text' + (lastStatusState.kind ? ' ' + lastStatusState.kind : '');
+      }
+    }
+
+    langButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const nextLang = btn.dataset.lang === 'en' ? 'en' : 'vi';
+        if (nextLang === currentLang) return;
+        currentLang = nextLang;
+        localStorage.setItem('pico_flasher_lang', currentLang);
+        applyTranslations();
+      });
+    });
+
+    function log(line) {
+      const text = String(line ?? '');
+      logOutput.textContent = (logOutput.textContent + text + (text.endsWith('\n') ? '' : '\n')).slice(-24000);
+      logOutput.scrollTop = logOutput.scrollHeight;
+    }
+
+    function setStatusKey(key, args = [], kind = '') {
+      lastStatusState = { key, args, kind };
+      statusText.textContent = t(key, ...args);
+      statusText.className = 'status-text' + (kind ? ' ' + kind : '');
+    }
+
+    function setProgress(pct) {
+      const clamped = Math.max(0, Math.min(100, Math.floor(pct)));
+      progressBar.value = clamped;
+      statusPct.textContent = `${clamped}%`;
+    }
+
+    async function sha256Hex(bytes) {
+      const hash = await crypto.subtle.digest('SHA-256', bytes);
+      return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function verifyAppHeader(bytes, expectedProject, expectedVersion) {
+      const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+      if (bytes.length < 288 || bytes[0] !== 0xe9 || view.getUint32(32, true) !== 0xabcd5432) {
+        throw new Error('firmware.bin is not a valid ESP32 app image.');
+      }
+      const chipId = view.getUint16(12, true);
+      if (chipId !== PICO_CHIP_ID) {
+        throw new Error(`firmware.bin chip ID mismatch (expected ${PICO_CHIP_ID} for ESP32-S3, got ${chipId}).`);
+      }
+      const readField = (offset) => {
+        const slice = bytes.slice(offset, offset + 32);
+        return new TextDecoder().decode(slice).split('\0')[0];
+      };
+      const project = readField(80);
+      const version = readField(48);
+      if (project !== expectedProject) {
+        throw new Error(`Project mismatch: expected ${expectedProject}, got ${project}.`);
+      }
+      if (version !== expectedVersion) {
+        throw new Error(`Version mismatch: expected ${expectedVersion}, got ${version}.`);
+      }
+    }
+
+    async function loadManifest() {
+      if (!('serial' in navigator)) {
+        setStatusKey('statusNoWebSerial', [], 'err');
+        return;
+      }
+      try {
+        const res = await fetch('./manifest.json', { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status} loading manifest.json`);
+        const manifest = await res.json();
+        if (manifest.board !== 'pico' || manifest.builds?.[0]?.chipFamily !== 'ESP32-S3') {
+          throw new Error(t('errNotPicoManifest'));
+        }
+        const parts = manifest.builds[0].parts;
+        if (!Array.isArray(parts) || parts.length !== 4) {
+          throw new Error(t('errMissingParts'));
+        }
+        for (const offset of EXPECTED_OFFSETS) {
+          if (!parts.some(p => p.offset === offset)) {
+            throw new Error(t('errMissingOffset', offset));
+          }
+        }
+        manifestData = manifest;
+        metaVersion.textContent = `${manifest.project || 'Read_Pico'} ${manifest.version}`;
+        metaParts.innerHTML = parts
+          .slice()
+          .sort((a, b) => a.offset - b.offset)
+          .map(p => `0x${p.offset.toString(16).padEnd(6, ' ')} ${p.path} (${(p.size / 1024).toFixed(1)} KB)`)
+          .join('<br>');
+        btnFlash.disabled = false;
+        setStatusKey('statusReady');
+      } catch (err) {
+        setStatusKey('statusPkgErr', [err.message], 'err');
+        log(err.stack || err.message);
+      }
+    }
+
+    async function downloadAndVerifyParts(manifest) {
+      const rawParts = manifest.builds[0].parts.slice().sort((a, b) => a.offset - b.offset);
+      const verified = [];
+      for (let i = 0; i < rawParts.length; i++) {
+        const part = rawParts[i];
+        setStatusKey('statusDownloading', [part.path, i + 1, rawParts.length]);
+        const url = new URL(part.path, window.location.href);
+        url.searchParams.set('t', Date.now().toString());
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) {
+          throw new Error(`Failed to download ${part.path} (HTTP ${res.status})`);
+        }
+        const data = new Uint8Array(await res.arrayBuffer());
+        if (part.size && data.length !== part.size) {
+          throw new Error(`${part.path} size mismatch (expected ${part.size}, got ${data.length})`);
+        }
+        if (part.sha256) {
+          const digest = await sha256Hex(data);
+          if (digest !== part.sha256.toLowerCase()) {
+            throw new Error(`${part.path} SHA-256 mismatch!`);
+          }
+        }
+        if (part.path === 'bootloader.bin') {
+          const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+          if (data[0] !== 0xe9 || view.getUint16(12, true) !== PICO_CHIP_ID) {
+            throw new Error('bootloader.bin is not a valid ESP32-S3 bootloader.');
+          }
+        }
+        if (part.path === 'firmware.bin') {
+          verifyAppHeader(data, manifest.project || 'Read_Pico', manifest.version);
+        }
+        log(`Verified ${part.path} @ 0x${part.offset.toString(16)} (${data.length} bytes, sha256=${(part.sha256 || '').slice(0, 12)}…)`);
+        verified.push({ data, address: part.offset, name: part.path });
+      }
+      return verified;
+    }
+
+    btnFlash.addEventListener('click', async () => {
+      if (busy || !manifestData) return;
+      busy = true;
+      btnFlash.disabled = true;
+      logOutput.textContent = '';
+      setProgress(0);
+
+      let transport = null;
+      let loader = null;
+      try {
+        const port = await navigator.serial.requestPort({
+          filters: [{ usbVendorId: 0x303a }]
+        });
+
+        const fileArray = await downloadAndVerifyParts(manifestData);
+        const totalBytes = fileArray.reduce((sum, item) => sum + item.data.length, 0);
+
+        setStatusKey('statusConnecting');
+        transport = new Transport(port);
+        loader = new ESPLoader({
+          transport,
+          baudrate: 115200,
+          romBaudrate: 115200,
+          terminal: {
+            clean() { },
+            write(str) { log(str); },
+            writeLine(str) { log(str); }
+          }
+        });
+
+        await loader.main();
+        const chipName = loader.chip?.CHIP_NAME || '';
+        log(`Connected chip: ${chipName}`);
+        if (chipName !== 'ESP32-S3') {
+          throw new Error(t('errChipMismatch', chipName));
+        }
+
+        let completedBytes = 0;
+        setStatusKey('statusWriting');
+
+        await loader.writeFlash({
+          fileArray: fileArray.map(({ data, address }) => ({ data, address })),
+          flashSize: 'keep',
+          flashMode: 'keep',
+          flashFreq: 'keep',
+          eraseAll: false,
+          compress: true,
+          reportProgress(fileIndex, written, total) {
+            const part = fileArray[fileIndex];
+            const partProgressBytes = (written / total) * part.data.length;
+            const overallPct = ((completedBytes + partProgressBytes) / totalBytes) * 100;
+            setProgress(overallPct);
+            setStatusKey('statusFlashingPart', [part.name, part.address]);
+            if (written === total) {
+              completedBytes += part.data.length;
+            }
+          }
+        });
+
+        setProgress(100);
+        setStatusKey('statusResetting');
+        try {
+          await transport.setRTS(true);
+          await new Promise(r => setTimeout(r, 100));
+          await loader.after('hard_reset');
+        } catch (resetErr) {
+          log(`Reset note: ${resetErr.message}`);
+        }
+
+        setStatusKey('statusDone', [manifestData.version], 'ok');
+      } catch (err) {
+        log(err.stack || err.message);
+        setStatusKey('statusFailed', [err.message], 'err');
+      } finally {
+        if (transport) {
+          try {
+            await transport.disconnect();
+          } catch (e) {
+            log(`Disconnect: ${e.message}`);
+          }
+        }
+        busy = false;
+        btnFlash.disabled = false;
+      }
+    });
+
+    applyTranslations();
+    loadManifest();
+  </script>
+</body>
+
+</html>
