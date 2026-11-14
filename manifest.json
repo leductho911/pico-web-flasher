@@ -36,8 +36,8 @@
         {
           "path": "firmware.bin",
           "offset": 65536,
-          "size": 4168848,
-          "sha256": "b9ad0f1517a64df5a33fffea20bcb501acee272dd1f677a403f9fcba17477698"
+          "size": 4184896,
+          "sha256": "c240014cf596977e40a5ab4f7ac4ffd6009c583359a62b8140a333fa97cb425b"
         },
         {
           "path": "ota_data_initial.bin",
